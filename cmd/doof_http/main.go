@@ -8,6 +8,8 @@ package main
 import (
 	"context"
 	"github.com/apldex/doof/internal/pkg/handler"
+	"github.com/apldex/doof/internal/pkg/resource/db"
+	"github.com/apldex/doof/internal/pkg/usecase"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
@@ -17,10 +19,18 @@ import (
 )
 
 func main() {
-	h := handler.New()
+	persistentDB, err := db.NewPersistent("root:labti@tcp(127.0.0.1:3306)/belajar?parseTime=true")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	uc := usecase.New(persistentDB)
+
+	h := handler.New(uc)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/health", h.HandleHealthCheck).Methods(http.MethodGet, http.MethodHead)
+	r.HandleFunc("/user", h.HandleGetUserByID).Methods(http.MethodGet)
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, os.Kill)
@@ -57,7 +67,7 @@ func startServer(ctx context.Context, addr string, handler http.Handler) error {
 	<-ctx.Done() // blocking
 
 	log.Printf("shutting down server...")
-	ctxShutdown, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctxShutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctxShutdown); err != nil {
