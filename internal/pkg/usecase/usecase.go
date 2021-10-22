@@ -6,12 +6,14 @@
 package usecase
 
 import (
+	"fmt"
 	"github.com/apldex/doof/internal/pkg/model"
 	"github.com/apldex/doof/internal/pkg/resource/db"
 )
 
 type Usecase interface {
 	GetUserByID(id int) (*model.User, error)
+	CreateUser(name, email string) error
 }
 
 type usecase struct {
@@ -24,4 +26,12 @@ func New(persistentDB db.Persistent) Usecase {
 
 func (u *usecase) GetUserByID(id int) (*model.User, error) {
 	return u.persistentDB.GetUserByID(id)
+}
+
+func (u *usecase) CreateUser(name, email string) error {
+	if len(name) < 3 {
+		return fmt.Errorf("name should be more than 3 chars")
+	}
+
+	return u.persistentDB.CreateUser(name, email)
 }

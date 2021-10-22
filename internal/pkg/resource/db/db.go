@@ -15,6 +15,7 @@ import (
 
 type Persistent interface {
 	GetUserByID(id int) (*model.User, error)
+	CreateUser(name, email string) error
 }
 
 type persistent struct {
@@ -53,4 +54,28 @@ func (p *persistent) GetUserByID(id int) (*model.User, error) {
 	}
 
 	return &user, nil
+}
+
+func (p *persistent) CreateUser(name, email string) error {
+	query := `
+		INSERT INTO users (name, email) VALUES (?, ?)
+		`
+
+	tx, err := p.conn.Begin()
+	if err != nil {
+		return fmt.Errorf("[resource.db.createUser] begin tx failed: %v", err)
+	}
+	defer tx.Rollback() // if committed, will be no-op
+
+	_, err = tx.Exec(query, name, email)
+	if err != nil {
+		return fmt.Errorf("[resource.db.createUser] insert data failed: %v", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("[resource.db.createUser] commit tx failed: %v", err)
+	}
+
+	return nil
 }

@@ -31,6 +31,7 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/health", h.HandleHealthCheck).Methods(http.MethodGet, http.MethodHead)
 	r.HandleFunc("/user", h.HandleGetUserByID).Methods(http.MethodGet)
+	r.HandleFunc("/user", h.HandleCreateUser).Methods(http.MethodPost)
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, os.Kill)
